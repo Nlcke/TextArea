@@ -1,0 +1,24 @@
+<project>
+ <properties winrt_package="com.yourdomain.yourapp" app_icon_noexport="0" android_template="1" logicalWidth="320" retinaDisplay="3" windowHeight="0" iosDevice="0" fps="60" version="1.0" packageName="com.yourdomain.yourapp" win_org="GiderosMobile" html5_mem="256" osx_org="GiderosMobile" assetsOnly="0" app_icon="" autorotation="0" version_code="1" mouseToTouch="0" orientation="0" win_domain="giderosmobile.com" osx_bundle="com.yourdomain." encryptCode="0" touchToMouse="0" osx_category="5" scaleMode="0" encryptAssets="0" logicalHeight="480" mouseTouchOrder="0" html5_host="" architecture="1" osx_domain="giderosmobile.com" winrt_org="GiderosMobile" ios_bundle="com.yourdomain." windowWidth="0">
+  <imageScales/>
+  <plugins/>
+  <exports>
+   <export name="APK">
+    <property name="androidPath" value="D:/Programs/android-sdk-windows"/>
+    <property name="androidTarget" value="20"/>
+    <property name="antPath" value="D:/Programs/Apache-ANT"/>
+    <property name="javaPath" value="D:/Programs/Java/jdk1.8.0_60"/>
+    <property name="keyAlias" value=""/>
+    <property name="keyAliasPass" value=""/>
+    <property name="keyStore" value=""/>
+    <property name="keyStorePass" value=""/>
+    <property name="packageName" value="com.yourdomain.yourapp"/>
+   </export>
+  </exports>
+ </properties>
+ <file source="KBLayouts.lua"/>
+ <file source="Keypress.wav"/>
+ <file source="NotoSans.ttf"/>
+ <file source="TextArea.lua"/>
+ <file source="main.lua"/>
+</project>
