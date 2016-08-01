@@ -1546,6 +1546,85 @@ nil,
 nil, 
 nil, 
 },["en"] = {
+[[
+1 2 3 4 5 6 7 8 9 0
+q w e r t y u i o p
+ a s d f g h j k l 
+ , z x c v b n m . 
+]],[[
+1 2 3 4 5 6 7 8 9 0
+Q W E R T Y U I O P
+ A S D F G H J K L 
+ , Z X C V B N M . 
+]],[[
+! @ # $ % ^ & * ( )
+` ~ - _ = + { } [ ]
+    ; : " ' | \    
+    , < > ? / .    
+]],[[
+¡ ¢ £ ¤ ¥ ¦ § ¨ © ª
+« ¬ ­® ¯ ° ± ¹ ² ³ ´
+µ ¶ · ¸ º » ¼ ½ ¾ ¿
+      × Ø ÷ ø      
+]],[[
+Shift Alt Space BS Enter
+Shift Alt Left Right Go
+Shift Alt Switch Cursor Esc
+Shift Alt Langs Colors Options
+]],[[
+Keys -R R+ -G G+ -B B+ -A A+
+Ground -R R+ -G G+ -B B+ -A A+
+Frame -R R+ -G G+ -B B+ -A A+
+Fill -R R+ -G G+ -B B+ -A A+
+]],[[
+<Font Font> <Scale Scale> <Delay Delay>
+<Sound Sound> <Vibro Vibro> <Span Span>
+<Height Height> <Margin Margin> <Show Show>
+<Hold Hold> <Anim Anim> <Hide Hide>
+]],[[
+Undo Redo Dup All Cut Copy Paste
+Home Up PageUp   Home Up PageUp
+Left Move Right   Left Select Right
+End Down PageDn   End Down PageDn
+]],
+["A"] = "À Á Â Ã Ä Å Æ Ā Ă Ą \n \n \n ",
+["C"] = "Ç Ć Ĉ Ċ Č \n \n \n ",
+["D"] = "Ð Ď Đ \n \n \n ",
+["E"] = "È É Ê Ë Ē Ĕ Ė Ę Ě \n \n \n ",
+["G"] = "Ĝ Ğ Ġ Ģ \n \n \n ",
+["H"] = "Ĥ Ħ \n \n \n ",
+["I"] = "Ì Í Î Ï Ĩ Ī Ĭ Į İ Ĳ \n \n \n ",
+["J"] = "Ĵ \n \n \n ",
+["K"] = "Ķ \n \n \n ",
+["L"] = "Ĺ Ļ Ľ Ŀ Ł \n \n \n ",
+["N"] = "Ñ Ń Ņ Ň Ŋ\n \n \n ",
+["O"] = "Ò Ó Ô Õ Ö Ō Ŏ Ő Œ \n \n \n ",
+["R"] = "Ŕ Ŗ Ř \n \n \n ",
+["S"] = "ß Ś Ŝ Ş Š \n \n \n ",
+["T"] = "Þ Ţ Ť Ŧ \n \n \n ",
+["U"] = "Ù Ú Û Ü Ũ Ū Ŭ Ů Ű Ų \n \n \n ",
+["W"] = "Ŵ \n \n \n ",
+["Y"] = "Ý Ŷ Ÿ \n \n \n ",
+["Z"] = "Ź Ż Ž \n \n \n ",
+["a"] = "à á â ã ä å æ ā ă ą \n \n \n ",
+["c"] = "ç ć ĉ ċ č \n \n \n ",
+["d"] = "ð ď đ \n \n \n ",
+["e"] = "è é ê ë ē ĕ ė ę ě \n \n \n ",
+["g"] = "ĝ ğ ġ ģ \n \n \n ",
+["h"] = "ĥ ħ \n \n \n ",
+["i"] = "ì í î ï ĩ ī ĭ į ı ĳ \n \n \n ",
+["j"] = "ĵ \n \n \n ",
+["k"] = "ķ ĸ \n \n \n ",
+["l"] = "ĺ ļ ľ ŀ ł \n \n \n ",
+["n"] = "ñ ń ņ ň ŉ ŋ \n \n \n ",
+["o"] = "ò ó ô õ ö ō ŏ ő œ \n \n \n ",
+["r"] = "ŕ ŗ ř \n \n \n ",
+["s"] = "ſ ś ŝ ş š \n \n \n ",
+["t"] = "þ ţ ť ŧ \n \n \n ",
+["u"] = "ù ú û ü ũ ū ŭ ů ű ų\n \n \n ",
+["w"] = "ŵ \n \n \n ",
+["y"] = "ý ÿ ŷ \n \n \n ",
+["z"] = "ź ż ž \n \n \n ",
 },["it-2"] = {
 [[
 \ 1 2 3 4 5 6 7 8 9 0 ' ì 
