@@ -1174,6 +1174,8 @@ function TextArea:init(p)
 	self.lineheight = h
 	self.selection = {0, 0}
 	
+	if self.cursorpos > #chars then self.cursorpos = #chars end
+	
 	if width and height then self:updateArea(width, height) end
 	
 	if self.edit or self.scroll then
