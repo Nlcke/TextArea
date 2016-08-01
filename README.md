@@ -65,7 +65,7 @@ Virtual keyboard is fully customizable from within itself: you can set each colo
 ```
 	
 ## Keyboard Layouts
-Can be set via TextArea.setKeyboardLayouts(layouts).
+Can be set via `TextArea.setKeyboardLayouts(layouts)`.
 
 All layouts are grouped into languages:
 ```lua
