@@ -1546,19 +1546,6 @@ nil,
 nil, 
 nil, 
 },["en"] = {
-[[
-` 1 2 3 4 5 6 7 8 9 0 [ ] 
- ' , . p y f g c r l / = \
-a o e u i d h t n s - 
- ; q j k x b m w v z 
-]],[[
-~ ! @ # $ % ^ & * ( ) { } 
- " < > P Y F G C R L ? + |
-A O E U I D H T N S _ 
- : Q J K X B M W V Z 
-]],
-nil, 
-nil, 
 },["it-2"] = {
 [[
 \ 1 2 3 4 5 6 7 8 9 0 ' ì 
