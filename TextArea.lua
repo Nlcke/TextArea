@@ -3,7 +3,7 @@ Author: Nikolay Yevstakhov aka N1cke
 License: MIT
 
 [TextArea]
-  TextArea is Gideros library to show and edit multiline and oneline texts.
+TextArea is Gideros library to show and edit multiline and oneline texts.
 TextArea supports hardware and virtual (built-in) keyboard input. Text can
 be scrolled via mouse/touch and selected via mouse or virtual keyboard.
 All standard text operations are supported: Select All, Duplicate, Cut, Copy,
@@ -13,6 +13,7 @@ have it's own colors and alphas of text, sliders, selection and cursor.
 Various alignment modes are available: left, right, center and justified
 with ability to suppress word breaks ('wholewords' setting). When text
 editing is finished TextArea will run callback if defined.
+
 [Virtual keyboard]
 Virtual keyboard is fully customizable from within itself: you can set
 each color, change font and sound, modify height, set cursor delays etc.
