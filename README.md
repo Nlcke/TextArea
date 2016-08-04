@@ -20,6 +20,7 @@ Virtual keyboard is fully customizable from within itself: you can set each colo
 	'letterspace': [number] a space between characters
 	'linespace': [number] line height modifier
 	'color': [number in 0x000000..0xFFFFFF range] text color
+	'colors': [table] paragraphs' colors, can have a fraction for alpha
 	'wholewords': [boolean] only whole words in lines if enabled
 	'oneline': [boolean] fits all text into one line if enabled
 	'maxchars': [number] maximum text length restriction
