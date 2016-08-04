@@ -37,6 +37,7 @@ keyboard.
 	'letterspace': [number] a space between characters
 	'linespace': [number] line height modifier
 	'color': [number in 0x000000..0xFFFFFF range] text color
+	'colors': [table] paragraph colors, can have a fraction for alpha
 	'wholewords': [boolean] only whole words in lines if enabled
 	'oneline': [boolean] fits all text into one line if enabled
 	'maxchars': [number] maximum text length restriction
@@ -113,6 +114,7 @@ TextArea.default = {
 	letterspace = 0,
 	linespace   = 0,
 	color       = false,
+	colors      = false,
 	wholewords  = false,
 	oneline     = false,
 	maxchars    = false,
@@ -1014,7 +1016,6 @@ TextArea.isTextArea = true
 TextArea.cursorpos = 1
 TextArea.undolevel = 1
 
-
 function TextArea:init(p)
 	local oldtext, oldundolevel = self.text, self.undolevel
 	
@@ -1071,7 +1072,7 @@ function TextArea:init(p)
 	local align, width, height = self.align, self.width, self.height
 	local letterspace, linespace = self.letterspace, self.linespace
 	local wholewords, oneline = self.wholewords, self.oneline
-	local color, maxchars = self.color, self.maxchars
+	local color, colors, maxchars = self.color, self.colors, self.maxchars
 	
 	local x, y, w, h = font:getBounds(sample)
 	h = h + linespace
@@ -1155,7 +1156,20 @@ function TextArea:init(p)
 	
 	for i = 1, n do self:addChild(t[i]) end
 	
-	if color then
+	if colors then
+		local defaultcolor = color
+		local linenum = 1
+		for i = 1, n do
+			local color = colors[linenum]
+			color = color or defaultcolor
+			if color then
+				local alpha = color % 1
+				if alpha > 0 then t[i]:setAlpha(alpha) end
+				if color >= 1 then t[i]:setTextColor(color) end
+			end
+			if lines[i]:byte(-1) == 10 then linenum = linenum + 1 end
+		end
+	elseif color then
 		for i = 1, n do t[i]:setTextColor(color) end
 	end
 	
@@ -1285,21 +1299,27 @@ function TextArea.getLines(font, text, letterspace, width, length, wholewords)
 	chars[n+1] = {c[1], c[2]+1, c[4], c[4], ""}
 	sections[i] = {sections[i-1][2]+1, n+1}
 	chars[0], sections[0] = nil, nil
-	return chars, sections, lines
+	return chars, sections, lines, colors
 end
 
 function TextArea:update(p)
 	local cursorParent = Cursor.__parent
 	local cursorpos = self.cursorpos
+	local sel = self.selection
+	local width, height = self.width, self.height
 	for i, child in pairs(self.__children) do child:removeFromParent() end
 	TextArea.init(self, p)
+	self.selection = sel
 	if cursorParent == self then
 		self:addChild(Cursor.selection)
 		self:addChild(Cursor.vslider)
 		self:addChild(Cursor.hslider)
 		self:addChild(Cursor)
-		if cursorpos ~= self.cursorpos then
-			Cursor.setPos(self.cursorpos)
+		local char = self.chars[self.cursorpos]
+		Cursor:setPosition(char[3], (char[1] - 1) * self.lineheight)
+		if sel[1] ~= sel[2] then Cursor.setSelection(sel[1], sel[2]) end
+		if width ~= self.width or height ~= self.height then
+			self:updateSliders()
 		end
 	end
 end
@@ -1433,7 +1453,7 @@ function TextArea:updateSliders()
 		Cursor.hslider:setDimensions(0, 0)
 	end
 	Cursor.hslider:setColor(self.sldcolor, self.sldalpha)
-	Cursor.hslider:setPosition(ax + ox, self.height - self.sldwidth)	
+	Cursor.hslider:setPosition(ax + ox, ay + self.height - self.sldwidth)	
 	
 	local h = self.height * self.height / self.realheight
 	local oy = (self.height - h) * ay / self.scrollheight
@@ -1444,7 +1464,11 @@ function TextArea:updateSliders()
 		Cursor.vslider:setDimensions(0, 0)
 	end
 	Cursor.vslider:setColor(self.sldcolor, self.sldalpha)
-	Cursor.vslider:setPosition(self.width - self.sldwidth, ay + oy)
+	Cursor.vslider:setPosition(ax + self.width - self.sldwidth, ay + oy)
+end
+
+function TextArea:onResize(w, h)
+	self:update{width = w, height = h}
 end
 
 -- Cursor
