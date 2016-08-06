@@ -31,7 +31,8 @@ keyboard.
 	'font': [Font] font for the text
 	'text': [string] text to display
 	'sample': [string] text to get top and height for lines
-	'align': ["L"|"C"|"R"|"J"] i.e. left, center, right or justified
+	'align': ["L"|"C"|"R"|"J" or 0..1 or -1] left/center/right/justified
+	'valign': [number in 0..1 range] relative vertical positioning
 	'width': [number] to clip text width
 	'height': [number] to clip text height
 	'letterspace': [number] a space between characters
@@ -178,6 +179,16 @@ Keyboard.default = {
 }
 
 for k,v in pairs(Keyboard.default) do Keyboard[k] = v end
+
+local function getScreenWidth()
+	return application:getScaleMode() == "noScale" and
+		application:getDeviceWidth() or application:getContentWidth()
+end
+
+local function getScreenHeight()
+	return application:getScaleMode() == "noScale" and
+		application:getDeviceHeight() or application:getContentHeight()
+end
 
 -- Keyboard
 
@@ -526,7 +537,7 @@ local hidden = true
 
 function Keyboard.updatePosY(t)
 	local k = Keyboard.aniFactor
-	appH = application:getDeviceHeight()
+	appH = getScreenHeight()
 	local ax, ay = stage:getAnchorPosition()
 	local h = realheight
 	local y = k * (1 - t) * h + appH - h + ay
@@ -578,8 +589,10 @@ function Keyboard.slide()
 				parent:updateSliders()
 			end
 		end
-		local y1 = parent:getY()
-		local y2 = y1 + parent.height
+		local _, y1 = parent:getBounds(stage)
+		local px, py = parent:getAnchorPosition()
+		if parent.scrollheight == 0 then py = 0 end
+		local y2 = y1 + parent.height + py
 		local ay = t * (y2 - y)
 		stage:setAnchorPosition(0, ay)
 	end
@@ -600,8 +613,7 @@ end)
 
 function Keyboard.update()
 	local appW0, appH0 = appW, appH
-	appW = application:getDeviceWidth()
-	appH = application:getDeviceHeight()
+	appW, appH = getScreenWidth(), getScreenHeight()
 	realheight = appH * Keyboard.height
 	local layoutHeight = (1 - Keyboard.margin - Keyboard.margin) * realheight
 	
@@ -982,7 +994,7 @@ function Keyboard.show()
 	Keyboard:addEventListener(Event.APPLICATION_RESIZE, Keyboard.update, self)
 	Keyboard:addEventListener(Event.ENTER_FRAME, Keyboard.onEnterFrame, self)
 	stage:setAnchorPosition(0, 0)
-	Keyboard:setY(application:getDeviceHeight())
+	Keyboard:setY(getScreenHeight())
 	Keyboard.update()
 	stage:addChild(Keyboard)
 	hidden = false
@@ -1013,8 +1025,9 @@ end
 -- TextArea
 
 TextArea.isTextArea = true
-TextArea.cursorpos = 1
-TextArea.undolevel = 1
+TextArea.cursorpos  = 1
+TextArea.undolevel  = 1
+TextArea.valign     = 0
 
 function TextArea:init(p)
 	local oldtext, oldundolevel = self.text, self.undolevel
@@ -1083,7 +1096,7 @@ function TextArea:init(p)
 		
 	local n = #lines
 	
-	if align == "J" then
+	if align == "J" or align == -1 then
 		local sw = font:getAdvanceX("  ") - font:getAdvanceX(" ")
 			+ letterspace
 		for i = 1, n do
@@ -1137,11 +1150,10 @@ function TextArea:init(p)
 	
 	for i = 1, n do
 		local textfield = TextField.new(font, lines[i])
-		textfield:setY((i - 1) * h - y)
 		t[i] = textfield
 	end
 	
-	if align == "R" or align == "C" then
+	if align == "R" or align == "C" or tonumber(align) == align then
 		local k = align == "C" and 0.5 or 1.0
 		for i = 1, n do
 			local x = k * (width - t[i]:getWidth())
@@ -1183,7 +1195,6 @@ function TextArea:init(p)
 	
 	self.chars, self.sections, self.lines = chars, sections, lines
 	
-	self.offsetY = y
 	self.heightmul = self.realheight / Sprite.getHeight(self)
 	self.lineheight = h
 	self.selection = {0, 0}
@@ -1202,6 +1213,10 @@ function TextArea:init(p)
 		self:removeEventListener(Event.MOUSE_DOWN, TextArea.onFocus, self)
 		self:removeEventListener(Event.TOUCHES_BEGIN, TextArea.onFocus, self)
 	end
+	
+	for i = 1, n do
+		t[i]:setY((i - 1) * h - y)
+	end
 end
 
 function TextArea:updateArea(width, height)
@@ -1219,6 +1234,10 @@ function TextArea:updateArea(width, height)
 		self:setAnchorPosition(ax, ay)
 	end
 	self:setClip(ax-1, ay-1, width+1, height+1)
+	if self.valign ~= 0 and self.scrollheight == 0 then
+		ay = self.valign * (self.realheight - self.height)
+		self:setAnchorPosition(ax, ay)
+	end
 end
 
 function TextArea.getLines(font, text, letterspace, width, length, wholewords)
@@ -1810,6 +1829,9 @@ function Cursor.onPointerMove(e)
 		elseif y > parent.scrollheight then y = parent.scrollheight end
 		if x < 0 then x = 0
 		elseif x > parent.scrollwidth then x = parent.scrollwidth end
+		if parent.scrollheight == 0 and parent.valign > 0 then
+			y = parent.valign * (parent.realheight - parent.height)
+		end
 		parent:setAnchorPosition(x, y)
 		parent:setClip(x-1, y-1, parent.width+1, parent.height+1)
 		parent:updateSliders()
@@ -1863,8 +1885,10 @@ function Cursor.setPos(pos, noscroll)
 	local x = parent.chars[pos][3]
 	local y = (parent.chars[pos][1] - 1) * parent.lineheight
 	Cursor:setPosition(x, y)
-	if noscroll or parent.scrollwidth == 0 and parent.scrollheight == 0 then
-		return parent:updateSliders()
+	if noscroll or parent.scrollwidth == 0 then
+		if parent.valign == 0 and parent.scrollheight == 0 then
+			return parent:updateSliders()
+		end
 	end
 	local x0, y0 = parent:getAnchorPosition()
 	local x1 = math.min(x0 + parent.width, parent:getWidth())
@@ -1881,7 +1905,9 @@ function Cursor.setPos(pos, noscroll)
 	else
 		y = y0
 	end
-	if parent.scrollheight == 0 then y = 0 end
+	if parent.scrollheight == 0 and parent.valign > 0 then
+		y = parent.valign * (parent.realheight - parent.height)
+	end
 	parent:setAnchorPosition(x, y)
 	parent:setClip(x-1, y-1, parent.width+1, parent.height+1)
 	parent:updateSliders()
