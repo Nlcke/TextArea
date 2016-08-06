@@ -14,7 +14,8 @@ Virtual keyboard is fully customizable from within itself: you can set each colo
 	'font': [Font] font for the text
 	'text': [string] text to display
 	'sample': [string] text to get top and height for lines
-	'align': ["L"|"C"|"R"|"J"] i.e. left, center, right or justified
+	'align': ["L"|"C"|"R"|"J" or 0..1 or -1] left/center/right/justified
+	'valign': [number in 0..1 range] relative vertical positioning
 	'width': [number] to clip text width
 	'height': [number] to clip text height
 	'letterspace': [number] a space between characters
