@@ -1095,8 +1095,15 @@ function TextArea:init(p)
 		letterspace, not oneline and width, length, wholewords)
 		
 	local n = #lines
+	local k = nil
+	if align == "J" then k = -1
+	elseif align == "C" then k = 0.5
+	elseif align == "R" then k = 1.0
+	elseif tonumber(align) then
+		if align < 0 or align > 1 then k = -1 else k = align end
+	end
 	
-	if align == "J" or align == -1 then
+	if k == -1 then
 		local sw = font:getAdvanceX("  ") - font:getAdvanceX(" ")
 			+ letterspace
 		for i = 1, n do
@@ -1153,8 +1160,7 @@ function TextArea:init(p)
 		t[i] = textfield
 	end
 	
-	if align == "R" or align == "C" or tonumber(align) == align then
-		local k = align == "C" and 0.5 or 1.0
+	if k and k ~= -1 then
 		for i = 1, n do
 			local x = k * (width - t[i]:getWidth())
 			local p1, p2 = sections[i][1], sections[i][2]
