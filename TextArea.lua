@@ -81,6 +81,9 @@ keyboard.
 	'langsPerRow': [number greater than 0] langs menu columns' number
 	'lang': [string, optional] sets main language
 	'lang2': [string, optional] sets extra language
+◘ TextArea.setKeyboardOptions(options)
+	sets options and/or colors for virtual keyboard
+	'options': [table] accepts same keys as Keyboard.default table
 	
 [Keyboard Layouts]
 Can be set via TextArea.setKeyboardLayouts(layouts).
@@ -1383,6 +1386,31 @@ function TextArea.setKeyboardLayouts(layouts, langsPerRow, lang, lang2)
 	end
 	bounds = getLangBounds(font, Keyboard.lang)
 	Keyboard.update()
+end
+
+function TextArea.setKeyboardOptions(options)
+	local kb = Keyboard
+	for key, val in pairs(options) do
+		kb[key] = val
+		if key == "fontIndex" then
+			font = kb.fonts[kb.fontIndex] or kb.fonts[1]
+			bounds = getLangBounds(font, kb.lang)
+		elseif key == "soundIndex" then
+			sound = kb.sounds[kb.soundIndex]
+		elseif key == "height" then
+			appW, appH = 0, 0
+		elseif key == "fixTime" then
+			shiftTimer:setDelay(kb.fixTime)
+			altTimer:setDelay(kb.fixTime)
+			extTimer:setDelay(kb.fixTime)
+		elseif key == "aniTime" then
+			frames = math.max(1, math.ceil(Keyboard.aniTime/16))
+			aniTimer:setRepeatCount(frames)
+			aniTimer:reset()
+			aniTimer:start()
+		end
+	end
+	kb.update()
 end
 
 function TextArea:removeFocus(escape)
