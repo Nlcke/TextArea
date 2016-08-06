@@ -64,6 +64,9 @@ Virtual keyboard is fully customizable from within itself: you can set each colo
 	'langsPerRow': [number greater than 0] langs menu columns' number
 	'lang': [string, optional] sets main language
 	'lang2': [string, optional] sets extra language
+◘ TextArea.setKeyboardOptions(options)
+	sets options and/or colors for virtual keyboard
+	'options': [table] accepts same keys as Keyboard.default table
 ```
 	
 ## Keyboard Layouts
