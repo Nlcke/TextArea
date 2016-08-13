@@ -588,6 +588,9 @@ function Keyboard.slide()
 			local oldheight = parent.height
 			parent.height = math.min(Cursor.areaHeight, y)
 			if parent.height ~= oldheight then
+				if parent.scrollheight == 0 and parent.valign > 0 then
+					parent:setAnchorPosition(0, 0)
+				end
 				parent:updateArea(parent.width, parent.height)
 				parent:updateSliders()
 			end
