@@ -247,8 +247,8 @@ local optionsMenu = {
 }
 
 local toolbarMenu = {
-	{"Shift", "Alt", "Space" , "BS"    , "Enter"  },
-	{"Shift", "Alt", "Left"  , "Right" , "Go"     },
+	{"Shift", "Alt", "Space" , "BS"    , "Go"  },
+	{"Shift", "Alt", "Left"  , "Right" , "Enter"     },
 	{"Shift", "Alt", "Switch", "Cursor", "Esc"    },
 	{"Shift", "Alt", "Langs" , "Colors", "Options"},
 }
@@ -991,6 +991,7 @@ end
 
 function Keyboard.show()
 	if not hidden or aniTimer:isRunning() then return end
+	if not application:setKeyboardVisibility(true) then
 	Keyboard:addEventListener(Event.MOUSE_DOWN, Keyboard.onKeyPress, self)
 	Keyboard:addEventListener(Event.MOUSE_MOVE, Keyboard.onKeyMove, self)
 	Keyboard:addEventListener(Event.MOUSE_UP, Keyboard.onKeyRelease, self)
@@ -1003,6 +1004,7 @@ function Keyboard.show()
 	Keyboard:setY(getScreenHeight())
 	Keyboard.update()
 	stage:addChild(Keyboard)
+	end
 	hidden = false
 	selector:setVisible(false)
 	aniTimer:reset()
@@ -1011,14 +1013,16 @@ end
 
 function Keyboard.hide()
 	if hidden or aniTimer:isRunning() then return end
+	if not application:setKeyboardVisibility(false) then
 	Keyboard:removeEventListener(Event.MOUSE_DOWN, Keyboard.onKeyPress, self)
-	Keyboard:addEventListener(Event.MOUSE_MOVE, Keyboard.onKeyMove, self)	
+	Keyboard:removeEventListener(Event.MOUSE_MOVE, Keyboard.onKeyMove, self)	
 	Keyboard:removeEventListener(Event.MOUSE_UP, Keyboard.onKeyRelease, self)
 	Keyboard:removeEventListener(Event.TOUCHES_BEGIN, Keyboard.onKeyPress, self)
-	Keyboard:addEventListener(Event.TOUCHES_MOVE, Keyboard.onKeyMove, self)
+	Keyboard:removeEventListener(Event.TOUCHES_MOVE, Keyboard.onKeyMove, self)
 	Keyboard:removeEventListener(Event.TOUCHES_END, Keyboard.onKeyRelease, self)
 	Keyboard:removeEventListener(Event.APPLICATION_RESIZE, Keyboard.update, self)
 	Keyboard:removeEventListener(Event.ENTER_FRAME, Keyboard.onEnterFrame, self)
+	end
 	if Cursor.__parent then Cursor.__parent:updateSliders() end
 	hidden = true
 	selector:setVisible(false)
@@ -1481,12 +1485,24 @@ function TextArea:setFocus(showKeyboard)
 end
 
 function TextArea:onFocus(e)
-	if self == Cursor.__parent or aniTimer:isRunning() then return end
+	if aniTimer:isRunning() then return end
+	local isMe=true
 	local x0, y0 = e.x or e.touch.x, e.y or e.touch.y
+	local p=self
+	while p do
+		if not p:isVisible() then isMe=false end
+		p=p:getParent()
+	end
 	local x, y = self:globalToLocal(x0, y0)
 	local ax, ay = self:getAnchorPosition()
-	if x < ax or y < ay then return end
-	if x > ax + self.width or y > ay + self.height then return end
+	if x < ax or y < ay then isMe=false end
+	if x > ax + self.width or y > ay + self.height then isMe=false end
+	if self == Cursor.__parent then 
+		if not isMe then self:removeFocus("Go") end
+		return 
+	else	
+		if not isMe then return end
+	end
 	self:setFocus(e.touch)
 	Cursor.onPointerDown(e)
 end
@@ -1659,13 +1675,15 @@ function Cursor.onKeyDown(e)
 	Cursor.lastKeyEvent = e
 	Cursor.blinkCounter = 0
 	
-	local k = e.realCode or 0
+	local k = e.keyCode or -1
 	local s = Cursor.modifiers.Ctrl and
 		Cursor.hotkeys[string.char(e.keyCode or "")] or
 		e.specialKey or Cursor.specialKeys[k - 16777216]
 	if Cursor.modifiers.Ctrl and not s then return end
 	if e.keyCode and 301 <= e.keyCode and e.keyCode <= 306 then s = "Esc" end
-	if k > 16777216 and not s then return end
+	if e.keyCode == 8 then s = "BS" end
+	
+	if k~=-1 and not s then return end
 	
 	if Cursor.modifiers[s] ~= nil then
 		Cursor.modifiers[s] = true
@@ -1826,6 +1844,19 @@ function Cursor.onKeyUp(e)
 	local k = e.realCode
 	local s = Cursor.specialKeys[k - 16777216]
 	if Cursor.modifiers[s] then Cursor.modifiers[s] = false end
+	Cursor.lastKeyEvent = nil
+end
+
+function Cursor.onKeyChar(e)
+	local k=e.text
+	--print("chr",k:byte(1),k:byte(2))
+	if k=="\n" then 
+		Cursor.onKeyDown({specialKey="Enter"})
+	elseif k=="\b" then
+		Cursor.onKeyDown({specialKey="BS"})
+	else
+		Cursor.onKeyDown({key=k})
+	end
 	Cursor.lastKeyEvent = nil
 end
 
@@ -2033,6 +2064,7 @@ end
 
 Cursor:addEventListener(Event.KEY_DOWN, Cursor.onKeyDown)
 Cursor:addEventListener(Event.KEY_UP, Cursor.onKeyUp)
+Cursor:addEventListener(Event.KEY_CHAR, Cursor.onKeyChar)
 Cursor:addEventListener(Event.MOUSE_HOVER, Cursor.onPointerHover)
 Cursor:addEventListener(Event.MOUSE_DOWN, Cursor.onPointerDown)
 Cursor:addEventListener(Event.MOUSE_MOVE, Cursor.onPointerMove)
