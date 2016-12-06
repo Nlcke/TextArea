@@ -41,7 +41,8 @@ keyboard.
 	'colors': [table] paragraph colors, can have a fraction for alpha
 	'wholewords': [boolean] only whole words in lines if enabled
 	'oneline': [boolean] fits all text into one line if enabled
-	'maxchars': [number] maximum text length restriction
+	'linechars': [number] maximum line length restriction (in characters)
+	'maxchars': [number] maximum text length restriction (in characters)
 	'undolevels': [number in 0.. range] levels for undo/redo operations
 	'curwidth': [number] cursor width in pixels
 	'curcolor': [number in 0x000000..0xFFFFFF range] cursor color 
@@ -54,6 +55,7 @@ keyboard.
 	'edit': [boolean] adds mouse/touch listener to focus and edit if enabled
 	'scroll': [boolean] adds mouse/touch listener to scroll if enabled
 	'callback': [function] (textfield, esc) to be called when editing is done
+	'native': [boolean] enables native onscreen keyboard if available
 	NOTE: any missing parameter will be defaulted to TextArea.default one
 ◘ TextArea:update(t)
 	updates TextArea with new values from table (t)
@@ -134,6 +136,7 @@ TextArea.default = {
 	edit        = false,
 	scroll      = false,
 	callback    = false,
+	native      = false,
 }
 
 for k,v in pairs(TextArea.default) do TextArea[k] = v end
@@ -203,7 +206,7 @@ function Keyboard.importLayouts(filename)
 	file:close()
 	local r = "jQuery.keyboard.layouts%[['\"](.-)['\"]%]%s?=%s?({.-});"
 	for name, layout in data:gmatch(r) do
-		layoutjson = layout
+		local layoutjson = layout
 			:gsub(" ' ", " \\u0057 ")
 			:gsub(" '\"", " \\u0057\"")
 			:gsub("\"' ", "\"\\u0057 ")
@@ -247,8 +250,8 @@ local optionsMenu = {
 }
 
 local toolbarMenu = {
-	{"Shift", "Alt", "Space" , "BS"    , "Go"  },
-	{"Shift", "Alt", "Left"  , "Right" , "Enter"     },
+	{"Shift", "Alt", "Space" , "BS"    , "Enter"  },
+	{"Shift", "Alt", "Left"  , "Right" , "Go"     },
 	{"Shift", "Alt", "Switch", "Cursor", "Esc"    },
 	{"Shift", "Alt", "Langs" , "Colors", "Options"},
 }
@@ -355,7 +358,7 @@ if Keyboard.settings then
 	
 	Keyboard:addEventListener(Event.APPLICATION_EXIT, function()
 		local default = {}
-		for k,v in pairs(Keyboard.default) do default[k] = Keyboard[k] end
+		for k in pairs(Keyboard.default) do default[k] = Keyboard[k] end
 		default.layouts, default.fonts, default.sounds = nil
 		default.settings, default.langsPerRow, default.aniFactor = nil
 		local cfg = require"json".encode(default)
@@ -367,7 +370,7 @@ end
 
 function Keyboard.getLangsMenu(layouts, langsPerRow)
 	local t = {}
-	for k,v in pairs(layouts) do t[#t+1] = k end
+	for k in pairs(layouts) do t[#t+1] = k end
 	table.sort(t, function(a, b) return a < b end)
 	for i = #t, 1, -langsPerRow do table.insert(t, i, "\n") end
 	return table.concat(t, " ")
@@ -418,7 +421,7 @@ altSelector:setVisible(false)
 local altFixed = false
 local altTimer = Timer.new(Keyboard.fixTime, 1)
 
-local function setSelectorsColor(c, a)
+local function setSelectorsColor()
 	selector:setLineColor(Keyboard.frameColor, Keyboard.frameAlpha)
 	selector:setFillColor(Keyboard.fillColor, Keyboard.fillAlpha)
 	shiftSelector:setLineColor(Keyboard.frameColor, Keyboard.frameAlpha)
@@ -989,21 +992,36 @@ function Keyboard.onEnterFrame()
 	end
 end
 
+local events = {
+	[Event.MOUSE_DOWN] = Keyboard.onKeyPress,
+	[Event.MOUSE_MOVE] = Keyboard.onKeyMove,
+	[Event.MOUSE_UP] = Keyboard.onKeyRelease,
+	[Event.TOUCHES_BEGIN] = Keyboard.onKeyPress,
+	[Event.TOUCHES_MOVE] = Keyboard.onKeyMove,
+	[Event.TOUCHES_END] = Keyboard.onKeyRelease,
+	[Event.APPLICATION_RESIZE] = Keyboard.update,
+	[Event.ENTER_FRAME] = Keyboard.onEnterFrame,
+}
+
+local function enableEvents(yes)
+	local action = yes and Sprite.addEventListener or Sprite.removeEventListener
+	for event, callback in pairs(events) do
+		action(Keyboard, event, callback)
+	end
+end
+
 function Keyboard.show()
 	if not hidden or aniTimer:isRunning() then return end
-	if not application:setKeyboardVisibility(true) then
-	Keyboard:addEventListener(Event.MOUSE_DOWN, Keyboard.onKeyPress, self)
-	Keyboard:addEventListener(Event.MOUSE_MOVE, Keyboard.onKeyMove, self)
-	Keyboard:addEventListener(Event.MOUSE_UP, Keyboard.onKeyRelease, self)
-	Keyboard:addEventListener(Event.TOUCHES_BEGIN, Keyboard.onKeyPress, self)
-	Keyboard:addEventListener(Event.TOUCHES_MOVE, Keyboard.onKeyMove, self)
-	Keyboard:addEventListener(Event.TOUCHES_END, Keyboard.onKeyRelease, self)
-	Keyboard:addEventListener(Event.APPLICATION_RESIZE, Keyboard.update, self)
-	Keyboard:addEventListener(Event.ENTER_FRAME, Keyboard.onEnterFrame, self)
-	stage:setAnchorPosition(0, 0)
-	Keyboard:setY(getScreenHeight())
-	Keyboard.update()
-	stage:addChild(Keyboard)
+	if Keyboard.native and application:setKeyboardVisibility(true) then
+		Cursor:addEventListener(Event.KEY_CHAR, Cursor.onKeyChar)
+		Cursor:removeEventListener(Event.KEY_DOWN, Cursor.onKeyDown)
+		Cursor:removeEventListener(Event.KEY_UP, Cursor.onKeyUp)
+	else
+		enableEvents(true)
+		stage:setAnchorPosition(0, 0)
+		Keyboard:setY(getScreenHeight())
+		Keyboard.update()
+		stage:addChild(Keyboard)
 	end
 	hidden = false
 	selector:setVisible(false)
@@ -1013,15 +1031,12 @@ end
 
 function Keyboard.hide()
 	if hidden or aniTimer:isRunning() then return end
-	if not application:setKeyboardVisibility(false) then
-	Keyboard:removeEventListener(Event.MOUSE_DOWN, Keyboard.onKeyPress, self)
-	Keyboard:removeEventListener(Event.MOUSE_MOVE, Keyboard.onKeyMove, self)	
-	Keyboard:removeEventListener(Event.MOUSE_UP, Keyboard.onKeyRelease, self)
-	Keyboard:removeEventListener(Event.TOUCHES_BEGIN, Keyboard.onKeyPress, self)
-	Keyboard:removeEventListener(Event.TOUCHES_MOVE, Keyboard.onKeyMove, self)
-	Keyboard:removeEventListener(Event.TOUCHES_END, Keyboard.onKeyRelease, self)
-	Keyboard:removeEventListener(Event.APPLICATION_RESIZE, Keyboard.update, self)
-	Keyboard:removeEventListener(Event.ENTER_FRAME, Keyboard.onEnterFrame, self)
+	if Keyboard.native and application:setKeyboardVisibility(false) then
+		Cursor:removeEventListener(Event.KEY_CHAR, Cursor.onKeyChar)
+		Cursor:addEventListener(Event.KEY_DOWN, Cursor.onKeyDown)
+		Cursor:addEventListener(Event.KEY_UP, Cursor.onKeyUp)
+	else
+		enableEvents(false)
 	end
 	if Cursor.__parent then Cursor.__parent:updateSliders() end
 	hidden = true
@@ -1095,14 +1110,15 @@ function TextArea:init(p)
 	local align, width, height = self.align, self.width, self.height
 	local letterspace, linespace = self.letterspace, self.linespace
 	local wholewords, oneline = self.wholewords, self.oneline
-	local color, colors, maxchars = self.color, self.colors, self.maxchars
+	local color, colors = self.color, self.colors
+	local linechars, maxchars = self.linechars, self.maxchars
 	
 	local x, y, w, h = font:getBounds(sample)
 	h = h + linespace
 	
 	local chars, sections, lines = TextArea.getLines(
 		font, oneline and text:gsub("\n", " ") or text,
-		letterspace, not oneline and width, length, wholewords)
+		letterspace, not oneline and width, linechars, wholewords)
 		
 	local n = #lines
 	local k = nil
@@ -1256,14 +1272,15 @@ function TextArea:updateArea(width, height)
 	end
 end
 
-function TextArea.getLines(font, text, letterspace, width, length, wholewords)
-	width, length = width or math.huge, length or math.huge
+function TextArea.getLines(font, text, letterspace, width, linechars, wholewords)
+	width, linechars = width or math.huge, linechars or math.huge
 	local chars, sections, lines = {}, {}, {}
-	local row, col, line, n = 1, 0, "", 0
+	local row, col, line, n, lc = 1, 0, "", 0, 0
 	chars[0], sections[0] = {row, col, 0, 0, ""}, {0, 0}
 	
 	for i,code in utf8.codes(text) do
 		n = n + 1
+		lc = lc + 1
 		col = col + 1
 		if code == 10 then
 			lines[row] = line .. "\n"
@@ -1277,7 +1294,7 @@ function TextArea.getLines(font, text, letterspace, width, length, wholewords)
 			local linex = line .. char
 			local _, _, w = font:getBounds(linex.." ")
 			if letterspace ~= 0 then w = w + letterspace * utf8.len(linex) end
-			if w > width or n > length then
+			if w > width or lc > linechars then
 				if wholewords and utf8.find(linex, " ") then
 					local pos1, pos2 = sections[row-1][2]+1, n-1
 					
@@ -1319,6 +1336,7 @@ function TextArea.getLines(font, text, letterspace, width, length, wholewords)
 					line = char
 					chars[n] = {row, col, 0, w, char}
 				end
+				lc = 0
 			else
 				line = linex
 				local x = col == 1 and 0 or chars[n-1][4]
@@ -1334,7 +1352,7 @@ function TextArea.getLines(font, text, letterspace, width, length, wholewords)
 	chars[n+1] = {c[1], c[2]+1, c[4], c[4], ""}
 	sections[i] = {sections[i-1][2]+1, n+1}
 	chars[0], sections[0] = nil, nil
-	return chars, sections, lines, colors
+	return chars, sections, lines
 end
 
 function TextArea:update(p)
@@ -1451,7 +1469,7 @@ end
 
 function TextArea:setFocus(showKeyboard)
 	if not self.width or not self.height then
-		error("TextArea: set width and height to focus", 2)
+		error("TextArea: set width and height before focus", 2)
 	end
 	
 	local parent = Cursor.__parent
@@ -1486,12 +1504,12 @@ end
 
 function TextArea:onFocus(e)
 	if aniTimer:isRunning() then return end
-	local isMe=true
+	local isMe = true
 	local x0, y0 = e.x or e.touch.x, e.y or e.touch.y
-	local p=self
+	local p = self
 	while p do
-		if not p:isVisible() then isMe=false end
-		p=p:getParent()
+		if not p:isVisible() then isMe = false end
+		p = p:getParent()
 	end
 	local x, y = self:globalToLocal(x0, y0)
 	local ax, ay = self:getAnchorPosition()
@@ -1675,7 +1693,8 @@ function Cursor.onKeyDown(e)
 	Cursor.lastKeyEvent = e
 	Cursor.blinkCounter = 0
 	
-	local k = e.keyCode or -1
+	local k = e.realCode or 0
+	
 	local s = Cursor.modifiers.Ctrl and
 		Cursor.hotkeys[string.char(e.keyCode or "")] or
 		e.specialKey or Cursor.specialKeys[k - 16777216]
@@ -1683,7 +1702,7 @@ function Cursor.onKeyDown(e)
 	if e.keyCode and 301 <= e.keyCode and e.keyCode <= 306 then s = "Esc" end
 	if e.keyCode == 8 then s = "BS" end
 	
-	if k~=-1 and not s then return end
+	if k > 16777216 and not s then return end
 	
 	if Cursor.modifiers[s] ~= nil then
 		Cursor.modifiers[s] = true
@@ -1848,14 +1867,13 @@ function Cursor.onKeyUp(e)
 end
 
 function Cursor.onKeyChar(e)
-	local k=e.text
-	--print("chr",k:byte(1),k:byte(2))
-	if k=="\n" then 
-		Cursor.onKeyDown({specialKey="Enter"})
-	elseif k=="\b" then
-		Cursor.onKeyDown({specialKey="BS"})
+	local k = e.text
+	if k == "\n" then 
+		Cursor.onKeyDown{specialKey="Enter"}
+	elseif k == "\b" then
+		Cursor.onKeyDown{specialKey="BS"}
 	else
-		Cursor.onKeyDown({key=k})
+		Cursor.onKeyDown{key = k}
 	end
 	Cursor.lastKeyEvent = nil
 end
@@ -2064,7 +2082,6 @@ end
 
 Cursor:addEventListener(Event.KEY_DOWN, Cursor.onKeyDown)
 Cursor:addEventListener(Event.KEY_UP, Cursor.onKeyUp)
-Cursor:addEventListener(Event.KEY_CHAR, Cursor.onKeyChar)
 Cursor:addEventListener(Event.MOUSE_HOVER, Cursor.onPointerHover)
 Cursor:addEventListener(Event.MOUSE_DOWN, Cursor.onPointerDown)
 Cursor:addEventListener(Event.MOUSE_MOVE, Cursor.onPointerMove)
