@@ -1014,6 +1014,7 @@ function Keyboard.show()
 	if not hidden or aniTimer:isRunning() then return end
 	if Keyboard.native and application:setKeyboardVisibility(true) then
 		Cursor:addEventListener(Event.KEY_CHAR, Cursor.onKeyChar)
+		Cursor:addEventListener(Event.KEY_DOWN, Cursor.onBackspace)
 		Cursor:removeEventListener(Event.KEY_DOWN, Cursor.onKeyDown)
 		Cursor:removeEventListener(Event.KEY_UP, Cursor.onKeyUp)
 	else
@@ -1033,6 +1034,7 @@ function Keyboard.hide()
 	if hidden or aniTimer:isRunning() then return end
 	if Keyboard.native and application:setKeyboardVisibility(false) then
 		Cursor:removeEventListener(Event.KEY_CHAR, Cursor.onKeyChar)
+		Cursor:removeEventListener(Event.KEY_DOWN, Cursor.onBackspace)
 		Cursor:addEventListener(Event.KEY_DOWN, Cursor.onKeyDown)
 		Cursor:addEventListener(Event.KEY_UP, Cursor.onKeyUp)
 	else
@@ -1875,6 +1877,11 @@ function Cursor.onKeyChar(e)
 	else
 		Cursor.onKeyDown{key = k}
 	end
+	Cursor.lastKeyEvent = nil
+end
+
+function Cursor.onBackspace(e)
+	if e.keyCode == 8 then Cursor.onKeyDown{specialKey="BS"} end
 	Cursor.lastKeyEvent = nil
 end
 
