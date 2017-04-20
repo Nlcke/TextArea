@@ -11,7 +11,7 @@ TextArea.setKeyboardLayouts(require "kblayouts", 10)
 local width = application:getDeviceWidth()
 local height = application:getDeviceHeight()
 local chars = {}
-for code = 1, 1024 do chars[#chars+1] = utf8.char(code) end
+for code = 1, 2048 do chars[#chars+1] = utf8.char(code) end
 local font = TTFont.new("NotoSans.ttf", 30, table.concat(chars))
 local callback = function(self, escape)
 	print("escape:", escape, ", text:", self.text)
